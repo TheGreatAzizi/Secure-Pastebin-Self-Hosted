@@ -1,4 +1,8 @@
-# 🔐 Secure Pastebin
+<p align="center">
+  <img src="https://sphost.theazizi.ir/favicon.svg" width="100" height="100" alt="Secure Pastebin Logo">
+</p>
+
+# 🔐 Secure Pastebin (Self-Hosted Ver)
 
 > **Self-Hosted, Zero-Knowledge, End-to-End Encrypted Pastebin**
 > 
@@ -11,7 +15,7 @@
 [![Security](https://img.shields.io/badge/Security-Zero--Knowledge-success.svg)](#)
 
 🌐 **Live Demo:** https://sphost.theazizi.ir  
-☁️ **Cloudflare Worker Version:** [IP-Security-Analyzer-Cloudflare-Worker](https://github.com/TheGreatAzizi/IP-Security-Analyzer-Cloudflare-Worker)
+☁️ [**Cloudflare Worker Version**](https://github.com/TheGreatAzizi/Secure-Pastebin-Cloudflare-Worker)
 
 ---
 
@@ -47,41 +51,41 @@
 ### Zero-Knowledge Proof
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ZERO-KNOWLEDGE GUARANTEE                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   USER BROWSER                      SERVER / DATABASE           │
-│   ─────────────                     ─────────────────           │
-│                                                                  │
-│   ┌─────────────┐                   ┌─────────────────┐          │
-│   │ Generate    │ ──NOT SENT──────► │                 │          │
-│   │ AES-256 Key │                   │  NO KEYS STORED │          │
-│   └─────────────┘                   │                 │          │
-│                                     └─────────────────┘          │
+┌────────────────────────────────────────────────────────────────┐
+│                    ZERO-KNOWLEDGE GUARANTEE                    │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│   USER BROWSER                      SERVER / DATABASE          │
+│   ─────────────                     ─────────────────          │
+│                                                                │
+│   ┌─────────────┐                   ┌─────────────────┐        │
+│   │ Generate    │ ──NOT SENT──────► │                 │        │
+│   │ AES-256 Key │                   │  NO KEYS STORED │        │
+│   └─────────────┘                   │                 │        │
+│                                     └─────────────────┘        │
 │   ┌─────────────┐                                              │
-│   │ Encrypt     │ ──NOT SENT────────────────────────────────────►│
+│   │ Encrypt     │ ──NOT SENT──────────────────────────────────►│
 │   │ Plaintext   │                                              │
 │   │ with Key    │                                              │
 │   └─────────────┘                                              │
-│                                                                  │
-│   ┌─────────────┐                   ┌─────────────────┐          │
-│   │ Send:       │ ──HTTPS─────────► │ Store:          │          │
-│   │ • ID        │                   │ • ID            │          │
-│   │ • IV        │                   │ • IV            │          │
-│   │ • Ciphertext│                   │ • Ciphertext    │          │
-│   │ • Metadata  │                   │ • Metadata      │          │
-│   └─────────────┘                   │                 │          │
-│                                     │  NO PLAINTEXT   │          │
-│   ┌─────────────┐                   │  NO PASSWORD    │          │
-│   │ Key Stored  │                   │  NO KEY         │          │
-│   │ in URL:     │                   │                 │          │
-│   │             │                   └─────────────────┘          │
-│   │ #id:key   ◄─┘  NEVER in HTTP headers                        │
-│   │             │                                                │
-│   └─────────────┘  Fragment not sent to server                  │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+│                                                                │
+│   ┌─────────────┐                   ┌─────────────────┐        │
+│   │ Send:       │ ──HTTPS─────────► │ Store:          │        │
+│   │ • ID        │                   │ • ID            │        │
+│   │ • IV        │                   │ • IV            │        │
+│   │ • Ciphertext│                   │ • Ciphertext    │        │
+│   │ • Metadata  │                   │ • Metadata      │        │
+│   └─────────────┘                   │                 │        │
+│                                     │  NO PLAINTEXT   │        │
+│   ┌─────────────┐                   │  NO PASSWORD    │        │
+│   │ Key Stored  │                   │  NO KEY         │        │
+│   │ in URL:     │                   │                 │        │
+│   │             │                   └─────────────────┘        │
+│   │ #id:key   ◄─┘  NEVER in HTTP headers                       │
+│   │             │                                              │
+│   └─────────────┘  Fragment not sent to server                 │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ### Technical Specifications
@@ -192,7 +196,6 @@ define('DB_NAME', 'your_cpanel_username_pastebin');
 
 ### Step 5: Verification Checklist
 
-- [ ] `https://yoursite.com/pastebin/` loads without mixed content warnings
 - [ ] Database connection successful (check error logs)
 - [ ] `POST /api/create` returns 201 with valid JSON
 - [ ] `GET /api/get/{id}` returns encrypted data
@@ -409,33 +412,12 @@ Retrieve encrypted paste by ID.
 
 ## 🤝 Contributing
 
-### Security Disclosure Policy
+Contributions welcome! Areas to improve:
 
-**DO NOT** open public issues for security vulnerabilities.
-
-Responsible disclosure:
-1. Email: security@yourdomain.com
-2. GPG Key: [0xYOURKEYFingerprint]
-3. Response time: 48 hours
-4. Bounty: Varies by severity
-
-### Development Setup
-
-```bash
-# Local HTTPS testing
-npx mkcert localhost 127.0.0.1
-npx serve . --ssl-cert localhost.pem --ssl-key localhost-key.pem
-
-# Or PHP built-in (limited, no HTTPS)
-php -S localhost:8000
-```
-
-### Code Standards
-
-- PSR-12 for PHP
-- ES2020 for JavaScript
-- BEM for CSS
-- All crypto operations must use Web Crypto API (no custom crypto)
+- [ ] File attachments (encrypted)
+- [ ] QR code generation for sharing
+- [ ] Custom themes
+- [ ] Browser extension
 
 ---
 
@@ -481,5 +463,9 @@ php -S localhost:8000
 
 ---
 
-**Made with 🔒 in [Your Location]**
-```
+## 👤 Author
+
+**TheGreatAzizi**
+
+- GitHub: [@TheGreatAzizi](https://github.com/TheGreatAzizi)
+- X/Twitter: [@the_azzi](https://x.com/the_azzi)
