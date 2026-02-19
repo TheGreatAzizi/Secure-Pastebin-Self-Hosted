@@ -161,7 +161,7 @@ define('DB_NAME', 'your_cpanel_username_pastebin');
 ### Step 3: File Upload
 
 ```
-/public_html/pastebin/
+/public_html/
 ├── index.php          # API backend + router
 ├── index.html         # Single-page application
 ├── style.css          # Complete styling (RTL included)
