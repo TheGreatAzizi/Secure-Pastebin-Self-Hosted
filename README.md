@@ -19,19 +19,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Cryptography Architecture](#-cryptography-architecture)
-- [Installation](#-installation)
-- [Database Structure](#-database-structure)
-- [API Reference](#-api-reference)
-- [Security Analysis](#-security-analysis)
-- [Browser Compatibility](#-browser-compatibility)
-- [Deployment Comparison](#-deployment-comparison)
-
----
-
 ## ✨ Features
 
 | Feature | Description | Security Impact |
