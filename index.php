@@ -144,12 +144,26 @@ function normalizeRoutePath(string $path): string
     }
 
     $path = preg_replace('#/+#', '/', $path) ?: '/';
-    if ($path !== '/' && str_ends_with($path, '/')) {
+    if ($path !== '/' && routePathEndsWith($path, '/')) {
         $path = rtrim($path, '/');
         $path = $path === '' ? '/' : $path;
     }
 
     return $path;
+}
+
+function routePathEndsWith(string $haystack, string $needle): bool
+{
+    if ($needle === '') {
+        return true;
+    }
+
+    $needleLength = strlen($needle);
+    if ($needleLength > strlen($haystack)) {
+        return false;
+    }
+
+    return substr($haystack, -$needleLength) === $needle;
 }
 
 function sendCorsHeaders(): void

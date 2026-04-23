@@ -373,7 +373,7 @@ $phpExample = str_replace('{{BASE_URL}}', $baseUrl, $phpTemplate);
 
         <footer>
             <p>🛡️ Zero-Knowledge Architecture • Server cannot read your data</p>
-            <p class="footer-subtitle"></p>
+            <p class="footer-subtitle">API docs styled to match the main app.</p>
             <div class="footer-links">
                 <a href="<?= h($homeUrl) ?>" title="Main app" aria-label="Main app">
                     <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3 3 9v12h18V9l-9-6Zm0 2.2 7 4.67V19h-4v-5H9v5H5V9.87l7-4.67Z"/></svg>
