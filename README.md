@@ -2,451 +2,551 @@
   <img src="https://sphost.theazizi.ir/favicon.svg" width="100" height="100" alt="Secure Pastebin Logo">
 </p>
 
-# 🔐 Secure Pastebin (Self-Hosted Ver)
+# 🔐 Secure Pastebin (Self-Hosted)
 
-> **Self-Hosted, Zero-Knowledge, End-to-End Encrypted Pastebin**
-> 
-> Share sensitive messages securely. Server cannot read your data. Ever.
+> **Self-hosted, zero-knowledge, end-to-end encrypted pastebin built with PHP, MySQL, Web Crypto API, and a responsive single-page UI.**
+
+Share sensitive text securely. Encryption happens in the browser before upload, the server stores ciphertext only, and the decryption key stays in the URL fragment (`#...`) so it is never sent to the server.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://php.net)
 [![Crypto](https://img.shields.io/badge/Encryption-AES--256--GCM-green.svg)](https://en.wikipedia.org/wiki/Galois/Counter_Mode)
-[![Deployment](https://img.shields.io/badge/Deployment-Self--Hosted-orange.svg)](#)
-[![Security](https://img.shields.io/badge/Security-Zero--Knowledge-success.svg)](#)
+[![Deployment](https://img.shields.io/badge/Deployment-Self--Hosted-orange.svg)](#installation)
+[![API](https://img.shields.io/badge/API-Documented-success.svg)](#api)
 
 🌐 **Live Demo:** https://sphost.theazizi.ir  
-☁️ [**Cloudflare Worker Version**](https://github.com/TheGreatAzizi/Secure-Pastebin-Cloudflare-Worker)
+☁️ **Cloudflare Worker version:** https://github.com/TheGreatAzizi/Secure-Pastebin-Cloudflare-Worker
 
 ---
 
 ## ✨ Features
 
-| Feature | Description | Security Impact |
-|---------|-------------|---------------|
-| 🔒 **E2E Encryption** | AES-256-GCM in browser before transmission | Server sees only ciphertext |
-| 🛡️ **Zero-Knowledge** | Server has zero access to keys or plaintext | Mathematically provable |
-| 🔑 **Password Protection** | PBKDF2 with 100,000 iterations | Brute-force resistant |
-| 🔥 **Burn After Read** | Auto-delete after first access | Forward secrecy |
-| ⏱️ **Auto-Expiration** | 1 hour to 30 days configurable | Limits exposure window |
-| 🌐 **RTL Support** | Persian, Arabic, Hebrew typography | Accessibility |
-| 📱 **Responsive** | Mobile-first design | Usability |
+- 🔒 **Client-side AES-256-GCM encryption** using the native Web Crypto API
+- 🛡️ **Zero-knowledge architecture** — server never receives plaintext, password, or key
+- 🧾 **Optional subject field** included inside the encrypted payload
+- 🔑 **Optional password protection** with PBKDF2 (100,000 iterations, SHA-256)
+- 🔥 **Burn after reading** support
+- ⏱️ **Preset expiration** plus **custom expiration date & time**
+- 📝 **Markdown authoring + rendering**
+  - compact formatting toolbar in the composer
+  - Markdown is rendered **after decryption only**
+- 🔗 **Two share-link formats**
+  - full link: `/p/{id}#key`
+  - short link: `/#id:key`
+- 📋 **Copy actions** for full link, short link, and decrypted text
+- 📱 **Responsive UI** with improved mobile layout
+- 🌍 **RTL-aware text handling** for Persian / Arabic / Hebrew content
+- 🔤 **No external font CDN** — uses a local Vazirmatn-based font stack
+- ⚙️ **Documented HTTP API** with `/api/docs`
 
 ---
 
-## 🔐 Cryptography Architecture
+## 🔐 How the security model works
 
-### Zero-Knowledge Proof
+1. The browser generates or derives the encryption key locally.
+2. The browser encrypts the payload locally using AES-256-GCM.
+3. The server receives only:
+   - paste ID
+   - IV
+   - ciphertext
+   - metadata such as expiration / burn-after-read / password flag
+4. The decryption key is kept in the URL fragment (`#...`). URL fragments are not sent in normal HTTP requests.
+5. The recipient opens the link, downloads the encrypted payload, and decrypts it locally.
 
+### Important note
+
+If the full share URL is lost, the message is **not recoverable**. The server cannot reconstruct the decryption key.
+
+---
+
+## 🧱 Current stack
+
+- **Frontend:** HTML, CSS, vanilla JavaScript
+- **Crypto:** Web Crypto API
+- **Backend/router:** PHP
+- **Database:** MySQL / MariaDB
+- **Storage model:** encrypted payload + metadata only
+
+---
+
+## 🆕 What is included in this version
+
+Compared with the older README, the current app now includes compact share links, custom expiration timestamps, a Markdown toolbar and renderer, password strength feedback, an API docs page, updated responsive layout, and a local-font setup with no external font dependency. The older README you uploaded still documents the earlier API shape and older sharing format. fileciteturn0file0
+
+---
+
+## 🧩 Share link formats
+
+### Full share link
+
+```text
+https://your-domain.com/p/AbCdEf1234567890#BASE64URL_KEY
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                    ZERO-KNOWLEDGE GUARANTEE                    │
-├────────────────────────────────────────────────────────────────┤
-│                                                                │
-│   USER BROWSER                      SERVER / DATABASE          │
-│   ─────────────                     ─────────────────          │
-│                                                                │
-│   ┌─────────────┐                   ┌─────────────────┐        │
-│   │ Generate    │ ──NOT SENT──────► │                 │        │
-│   │ AES-256 Key │                   │  NO KEYS STORED │        │
-│   └─────────────┘                   │                 │        │
-│                                     └─────────────────┘        │
-│   ┌─────────────┐                                              │
-│   │ Encrypt     │ ──NOT SENT──────────────────────────────────►│
-│   │ Plaintext   │                                              │
-│   │ with Key    │                                              │
-│   └─────────────┘                                              │
-│                                                                │
-│   ┌─────────────┐                   ┌─────────────────┐        │
-│   │ Send:       │ ──HTTPS─────────► │ Store:          │        │
-│   │ • ID        │                   │ • ID            │        │
-│   │ • IV        │                   │ • IV            │        │
-│   │ • Ciphertext│                   │ • Ciphertext    │        │
-│   │ • Metadata  │                   │ • Metadata      │        │
-│   └─────────────┘                   │                 │        │
-│                                     │  NO PLAINTEXT   │        │
-│   ┌─────────────┐                   │  NO PASSWORD    │        │
-│   │ Key Stored  │                   │  NO KEY         │        │
-│   │ in URL:     │                   │                 │        │
-│   │             │                   └─────────────────┘        │
-│   │ #id:key   ◄─┘  NEVER in HTTP headers                       │
-│   │             │                                              │
-│   └─────────────┘  Fragment not sent to server                 │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+
+### Full share link with password flag
+
+```text
+https://your-domain.com/p/AbCdEf1234567890#BASE64URL_SALT:pwd
 ```
 
-### Technical Specifications
+### Short share link
 
-| Component | Standard | Parameters |
-|-----------|----------|------------|
-| Symmetric Encryption | AES-256-GCM | 256-bit key, 96-bit nonce |
-| Key Derivation | PBKDF2 | 100,000 iterations, SHA-256 |
-| Random Generation | CSPRNG | Crypto.getRandomValues() |
-| Key Encoding | Base64URL | URL-safe, no padding |
-| Transport Security | TLS 1.3 | Certificate pinning recommended |
-
-### Encryption Flow
-
-```javascript
-// 1. Key Generation (Browser)
-const key = await crypto.subtle.generateKey(
-  { name: 'AES-GCM', length: 256 },
-  true,
-  ['encrypt', 'decrypt']
-);
-
-// 2. Encryption (Browser - before network)
-const iv = crypto.getRandomValues(new Uint8Array(12));
-const ciphertext = await crypto.subtle.encrypt(
-  { name: 'AES-GCM', iv },
-  key,
-  new TextEncoder().encode(plaintext)
-);
-
-// 3. Transmission (HTTPS only)
-fetch('/api/create', {
-  body: JSON.stringify({
-    id: randomId,
-    encryptedData: { iv: [...iv], data: [...ciphertext] },
-    // NO KEY HERE - key stays in browser/URL
-  })
-});
+```text
+https://your-domain.com/#AbCdEf1234567890:BASE64URL_KEY
 ```
+
+### Short share link with password flag
+
+```text
+https://your-domain.com/#AbCdEf1234567890:BASE64URL_SALT:pwd
+```
+
+### ID compatibility
+
+The backend currently accepts these ID formats:
+
+- legacy **32-character lowercase hex** IDs
+- compact **16-character URL-safe IDs** (`[A-Za-z0-9_-]{16}`)
+
+The UI currently generates the compact 16-character format by default.
+
+---
+
+## 📝 Encrypted payload format
+
+The browser encrypts a JSON payload. Subject and content are both inside the encrypted blob.
+
+Example logical structure before encryption:
+
+```json
+{
+  "subject": "Optional subject",
+  "content": "Secret message with **Markdown** support"
+}
+```
+
+The server never sees this plaintext object.
 
 ---
 
 ## 🚀 Installation
 
-### System Requirements
+## 1) Database
 
-| Requirement | Minimum | Recommended |
-|-------------|---------|-------------|
-| PHP | 7.4 | 8.1+ |
-| MySQL | 5.7 | 8.0+ |
-| Web Server | Apache 2.4 | Nginx + Apache |
-| SSL | Required | Let's Encrypt |
-
-### Step 1: Database Setup
+Create a database, then import `database.sql`.
 
 ```sql
-CREATE DATABASE IF NOT EXISTS secure_pastebin
-  CHARACTER SET utf8mb4 
-  COLLATE utf8mb4_unicode_ci;
-
-USE secure_pastebin;
-
-CREATE TABLE pastes (
+CREATE TABLE IF NOT EXISTS pastes (
     id VARCHAR(32) PRIMARY KEY,
     data TEXT NOT NULL,
     created_at BIGINT NOT NULL,
     expires_at BIGINT NOT NULL,
     burn_after_read TINYINT(1) DEFAULT 0,
     has_password TINYINT(1) DEFAULT 0,
-    views INT DEFAULT 0,
-    INDEX idx_expires (expires_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    views INT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_expires ON pastes(expires_at);
 ```
 
-### Step 2: Configuration
+## 2) Configure PHP
 
-Edit `index.php` (lines 5-8):
+Edit the database constants in `index.php`:
 
 ```php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'your_cpanel_username_dbuser');
-define('DB_PASS', 'your_secure_random_password');
-define('DB_NAME', 'your_cpanel_username_pastebin');
+const DB_HOST = 'localhost';
+const DB_USER = 'your_db_user';
+const DB_PASS = 'your_db_password';
+const DB_NAME = 'your_db_name';
 ```
 
-### Step 3: File Upload
+## 3) Upload files
 
-```
+Upload the project files to your web root.
+
+```text
 /public_html/
-├── index.php          # API backend + router
-├── index.html         # Single-page application
-├── style.css          # Complete styling (RTL included)
-├── script.js          # Web Crypto implementation
-├── .htaccess          # URL rewriting rules
-└── database.sql       # Schema (already imported)
+├── .htaccess
+├── api-docs.php
+├── database.sql
+├── index.html
+├── index.php
+├── LICENSE
+├── README.md
+├── script.js
+└── style.css
 ```
 
-### Step 4: SSL Enforcement
+## 4) Enable URL rewriting
 
-**cPanel Method:**
-1. SSL/TLS Status → Run AutoSSL
-2. Force HTTPS Redirect: ON
+Apache `.htaccess` used by the project:
 
-**Cloudflare Method:**
-1. DNS proxied through Cloudflare
-2. SSL/TLS mode: Full (strict)
-3. Always Use HTTPS: ON
+```apache
+RewriteEngine On
+RewriteBase /
 
-### Step 5: Verification Checklist
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
-- [ ] Database connection successful (check error logs)
-- [ ] `POST /api/create` returns 201 with valid JSON
-- [ ] `GET /api/get/{id}` returns encrypted data
-- [ ] Auto-cleanup: Expired rows delete automatically
+RewriteRule ^ index.php [L]
+```
+
+## 5) Use HTTPS
+
+`crypto.subtle` requires a secure context in production. Use:
+
+- HTTPS on your domain, or
+- `localhost` during local development
 
 ---
 
-## 🗄️ Database Structure
+## 📁 Project structure
 
-### Schema Overview
+| File | Purpose |
+|------|---------|
+| `index.php` | router + API backend |
+| `index.html` | single-page app UI |
+| `script.js` | encryption, decryption, UI behavior, Markdown tools |
+| `style.css` | responsive styling |
+| `api-docs.php` | human-friendly API documentation page |
+| `database.sql` | MySQL schema |
+| `.htaccess` | Apache rewrite rules |
 
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `id` | VARCHAR(32) | NO | Cryptographically random hex |
-| `data` | TEXT | NO | JSON: {iv: number[], data: number[]} |
-| `created_at` | BIGINT | NO | Unix timestamp (ms) |
-| `expires_at` | BIGINT | NO | Auto-deletion trigger (s) |
-| `burn_after_read` | TINYINT(1) | NO | Boolean flag |
-| `has_password` | TINYINT(1) | NO | PBKDF2 required flag |
-| `views` | INT | NO | Access counter |
+---
 
-### Real-World Example
+## 🧠 Composer UI highlights
 
-**User Input:**
+### Secure message composer
+
+- optional subject
+- Markdown toolbar
+- multiline textarea
+- preset expiration dropdown
+- custom expiration datetime picker
+- password-protection toggle
+- burn-after-reading toggle
+- password strength meter
+
+### Decrypted result view
+
+- subject display
+- rendered Markdown output
+- copy decrypted text button
+- burn-after-read warning when applicable
+
+---
+
+## ✍️ Markdown support
+
+Markdown is stored as plain text inside the encrypted payload and is rendered only after decryption.
+
+Supported authoring helpers include:
+
+- **Bold**
+- *Italic*
+- ~~Strikethrough~~
+- headings
+- quotes
+- bullet lists
+- numbered lists
+- links
+- inline code
+- fenced code blocks
+
+This keeps the stored payload simple while still giving the recipient a readable result view.
+
+---
+
+## 🔌 API
+
+### Docs page
+
+Once deployed, the built-in docs page is available at:
+
+```text
+https://your-domain.com/api/docs
 ```
-سلام، این پیام محرمانه من است.
-Hello, this is my secret message.
-```
 
-**What Gets Stored in Database:**
+### Base notes
+
+- API stores **ciphertext only**
+- API does **not** perform encryption for you
+- client must encrypt before sending data
+- password or raw key must **never** be sent to the server
+
+### Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/health` | service health check |
+| `GET` | `/api/options` | API capabilities, limits, routes |
+| `GET` | `/api/docs` | HTML API documentation |
+| `POST` | `/api/pastes` | create a paste |
+| `POST` | `/api/pastes/{id}` | create a paste with a specific ID |
+| `GET` | `/api/pastes/{id}` | fetch encrypted payload |
+| `GET` | `/api/pastes/{id}/meta` | fetch metadata only |
+| `POST` | `/api/create` | legacy create route |
+| `GET` | `/api/get/{id}` | legacy read route |
+
+### Limits
+
+From the current backend:
+
+- minimum expiration: **300 seconds**
+- maximum expiration: **31536000 seconds** (365 days)
+- max encrypted payload size: **4 MiB**
+
+### Supported create payload formats
+
+You can create a paste using any of these shapes:
+
+1. nested byte arrays
 
 ```json
 {
-  "id": "7a3f9e2b8c1d4e5f6a7b8c9d0e1f2a3b",
-  "data": "{\"iv\":[187,45,92,201,78,34,156,89,234,12,67,189],\"data\":[45,189,234,67,123,89,45,234,89,123,45,67,234,89,123,45,67,234,89,123,45,67,234,89,123,45,67,234,89,123,45,67,234,89,123,45,67,234,89,123,45,67,234,89,123,45]}",
-  "created_at": 1708368000000,
-  "expires_at": 1708454400,
-  "burn_after_read": 0,
-  "has_password": 1,
+  "encryptedData": {
+    "iv": [12, 34, 56],
+    "data": [99, 88, 77]
+  }
+}
+```
+
+2. top-level byte arrays
+
+```json
+{
+  "iv": [12, 34, 56],
+  "data": [99, 88, 77]
+}
+```
+
+3. nested base64url strings
+
+```json
+{
+  "encryptedData": {
+    "ivBase64": "AAECAwQFBgcICQoL",
+    "dataBase64": "mYh3"
+  }
+}
+```
+
+4. top-level base64url strings
+
+```json
+{
+  "ivBase64": "AAECAwQFBgcICQoL",
+  "dataBase64": "mYh3"
+}
+```
+
+`ivBase64url` / `dataBase64url` are also accepted.
+
+### Create request fields
+
+| Field | Required | Description |
+|------|----------|-------------|
+| `id` | optional | custom paste ID |
+| `encryptedData` or equivalent | yes | ciphertext payload |
+| `expiresIn` | optional | expiry in seconds |
+| `customExpiresAt` | optional | exact Unix timestamp in seconds |
+| `burnAfterRead` | optional | delete after first successful read |
+| `hasPassword` | optional | indicates password is required on the client |
+
+If `customExpiresAt` is present, it overrides `expiresIn`.
+
+### Example: create a paste
+
+```bash
+curl -X POST https://your-domain.com/api/pastes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "AbCdEf1234567890",
+    "encryptedData": {
+      "iv": [12, 34, 56, 78, 90, 12, 34, 56, 78, 90, 12, 34],
+      "data": [189, 45, 78, 201, 156, 78, 33, 45]
+    },
+    "expiresIn": 86400,
+    "burnAfterRead": false,
+    "hasPassword": false
+  }'
+```
+
+### Example success response
+
+```json
+{
+  "success": true,
+  "apiVersion": "1.2",
+  "id": "AbCdEf1234567890",
+  "expiresAt": 1735689600,
+  "expiresIn": 86400,
+  "burnAfterRead": false,
+  "hasPassword": false,
+  "url": "https://your-domain.com/p/AbCdEf1234567890",
+  "retrieveUrl": "https://your-domain.com/api/pastes/AbCdEf1234567890",
+  "metaUrl": "https://your-domain.com/api/pastes/AbCdEf1234567890/meta",
+  "docsUrl": "https://your-domain.com/api/docs"
+}
+```
+
+### Example: fetch encrypted payload
+
+```bash
+curl https://your-domain.com/api/pastes/AbCdEf1234567890
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "apiVersion": "1.2",
+  "id": "AbCdEf1234567890",
+  "encryptedData": {
+    "iv": [12, 34, 56, 78, 90, 12, 34, 56, 78, 90, 12, 34],
+    "data": [189, 45, 78, 201, 156, 78, 33, 45],
+    "ivBase64": "AAECAwQFBgcICQoL",
+    "dataBase64": "mYh3"
+  },
+  "data": {
+    "iv": [12, 34, 56, 78, 90, 12, 34, 56, 78, 90, 12, 34],
+    "data": [189, 45, 78, 201, 156, 78, 33, 45]
+  },
+  "burnAfterRead": false,
+  "hasPassword": false,
+  "created": 1735603200000,
+  "expiresAt": 1735689600,
+  "views": 1
+}
+```
+
+### Burn-after-read behavior
+
+When `burnAfterRead` is enabled, the first successful fetch from `GET /api/pastes/{id}` returns the ciphertext and then removes that paste from storage.
+
+### Metadata endpoint
+
+```bash
+curl https://your-domain.com/api/pastes/AbCdEf1234567890/meta
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "apiVersion": "1.2",
+  "id": "AbCdEf1234567890",
+  "shareUrl": "https://your-domain.com/p/AbCdEf1234567890",
+  "retrieveUrl": "https://your-domain.com/api/pastes/AbCdEf1234567890",
+  "created": 1735603200000,
+  "expiresAt": 1735689600,
+  "remainingSeconds": 86400,
+  "burnAfterRead": false,
+  "hasPassword": false,
   "views": 0
 }
 ```
 
-**URL Generated (CONTAINS KEY):**
-```
-https://yoursite.com/#7a3f9e2b8c1d4e5f6a7b8c9d0e1f2a3b:c2FsdHNhbHRzYWx0:pwd
-                                    ↑                    ↑
-                              Base64URL salt         Password flag
-                              (for PBKDF2)
+---
+
+## 🧪 Health and options
+
+### Health
+
+```bash
+curl https://your-domain.com/api/health
 ```
 
-**Critical Security Note:**
-- The URL fragment (`#...`) is **never sent** in HTTP headers
-- Server logs contain: `GET /api/get/7a3f9e2b8c1d4e5f6a7b8c9d0e1f2a3b`
-- Server logs **never contain**: The key, plaintext, or password
+### Options
+
+```bash
+curl https://your-domain.com/api/options
+```
+
+`/api/options` returns API version, limits, presets, capabilities, endpoints, and notes.
 
 ---
 
-## 🔧 API Reference
+## 🌐 Browser compatibility
 
-### Authentication
+| Browser | Status |
+|---------|--------|
+| Chrome / Edge | ✅ |
+| Firefox | ✅ |
+| Safari | ✅ |
+| Internet Explorer | ❌ |
 
-No authentication required. Security through cryptography, not access control.
-
-### Endpoints
-
-#### POST `/api/create`
-
-Create new encrypted paste.
-
-**Headers:**
-```
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "id": "a1b2c3d4e5f6... (32 hex characters)",
-  "encryptedData": {
-    "iv": [12, 34, 56, 78, 90, 12, 34, 56, 78, 90, 12, 34],
-    "data": [189, 45, 78, 201, 156, 78, 33, 45, 182, 91, 234, 12, 67]
-  },
-  "expiresIn": 86400,
-  "burnAfterRead": false,
-  "hasPassword": false
-}
-```
-
-**Success Response (201):**
-```json
-{
-  "success": true,
-  "id": "a1b2c3d4e5f6...",
-  "expiresIn": 86400,
-  "hasPassword": false,
-  "url": "https://yoursite.com/#a1b2c3d4e5f6:base64urlEncodedKey"
-}
-```
-
-**Error Responses:**
-| Code | Condition | Response |
-|------|-----------|----------|
-| 400 | Invalid ID format | `{"error": "Invalid ID format"}` |
-| 400 | Malformed JSON | `{"error": "Invalid JSON"}` |
-| 400 | Missing encryptedData | `{"error": "Invalid encrypted data format"}` |
-| 500 | Database failure | `{"error": "Failed to save paste"}` |
-
-#### GET `/api/get/{id}`
-
-Retrieve encrypted paste by ID.
-
-**Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| `id` | string | 32-character hexadecimal ID |
-
-**Success Response (200):**
-```json
-{
-  "data": {
-    "iv": [12, 34, 56, 78, 90, 12, 34, 56, 78, 90, 12, 34],
-    "data": [189, 45, 78, 201, 156, 78, 33, 45, 182, 91, 234, 12, 67]
-  },
-  "burnAfterRead": false,
-  "hasPassword": false,
-  "created": 1708368000000
-}
-```
-
-**Error Responses:**
-| Code | Condition |
-|------|-----------|
-| 400 | Invalid ID format |
-| 404 | Paste not found or expired |
+A secure context is required for the Web Crypto API.
 
 ---
 
-## 🛡️ Security Analysis
+## 🛡️ Security notes
 
-### Threat Model Matrix
+### Protected well
 
-| Attacker Capability | Data Access | Mitigation Status |
-|---------------------|-------------|-------------------|
-| **Passive network observer** | Encrypted TLS traffic only | ✅ Mitigated (TLS 1.3) |
-| **Database breach** | Ciphertext, metadata only | ✅ Mitigated (no keys stored) |
-| **Server compromise (root)** | Same as database | ✅ Mitigated (stateless design) |
-| **Backup tape theft** | Historical ciphertext | ✅ Mitigated (keys not in backups) |
-| **URL leak (no password)** | Full plaintext | ⚠️ **User responsibility** |
-| **URL leak (with password)** | Partial (needs password) | ⚠️ **Reduced risk** |
-| **Physical device access (post-decrypt)** | Plaintext in memory | ❌ **Not mitigated** |
+- database leaks still expose ciphertext only
+- server admins do not have plaintext or keys
+- password material stays client-side
+- URL fragment is not sent to the backend
 
-### What We Protect Against
+### Not protected well
 
-1. **Server-side attacks**: Even with full server compromise, attacker gains zero cryptographic material
-2. **Legal requests**: No plaintext or keys to surrender (technical impossibility)
-3. **Insider threats**: System administrators cannot access user content
-4. **Database leaks**: Ciphertext without keys is information-theoretically secure
+- malware on sender or recipient device
+- leaked full share URLs
+- weak passwords chosen by users
+- copied plaintext after decryption
+- screenshots or shoulder surfing
 
-### What We Cannot Protect Against
+### Recommended operational practices
 
-1. **Endpoint compromise**: Malware on sender/recipient device
-2. **Social engineering**: Users tricked into sharing URLs
-3. **Shoulder surfing**: Visual observation of decrypted content
-4. **Forensic analysis**: RAM dumps containing decrypted plaintext
-
-### Operational Security Recommendations
-
-| Risk | Mitigation Strategy |
-|------|---------------------|
-| URL in browser history | Use incognito/private mode |
-| URL in cloud sync | Disable browser sync for sensitive operations |
-| Screenshot exposure | Enable "Burn After Read" |
-| Password guessing | Use 12+ character random passwords |
-| Keylogger exposure | Use hardware security keys where possible |
+- send password separately from the URL
+- use burn-after-read for highly sensitive messages
+- prefer long random passwords
+- use private browsing on shared devices
+- do not paste highly sensitive links into third-party chatbots or analytics tools
 
 ---
 
-## 🌐 Browser Compatibility
+## 🎨 UX and design notes
 
-| Browser | Version | Web Crypto API | Status |
-|---------|---------|----------------|--------|
-| Chrome | 37+ | ✅ Full | Recommended |
-| Firefox | 34+ | ✅ Full | Recommended |
-| Safari | 7+ | ✅ Full | Supported |
-| Edge | 12+ | ✅ Full | Supported |
-| Opera | 24+ | ✅ Full | Supported |
-| Internet Explorer | Any | ❌ None | Not Supported |
-
-**Requirement:** Secure context (HTTPS or `localhost`) mandatory for `crypto.subtle` access.
+- improved composer layout for desktop and mobile
+- cleaner stacked settings cards for expiration and security options
+- compact Markdown toolbar
+- icon-only social links in the footer
+- consistent visual style shared by the app and API docs page
 
 ---
 
-## ⚖️ Deployment Comparison
+## 📌 Roadmap ideas
 
-### Self-Hosted (This Repository) vs Cloudflare Worker
-
-| Dimension | Self-Hosted | Cloudflare Worker |
-|-----------|-------------|-------------------|
-| **Infrastructure** | Your server/cPanel | Cloudflare Edge Network |
-| **Data Sovereignty** | Full control | Third-party processing |
-| **Latency** | Server location dependent | Global edge (<50ms) |
-| **Scalability** | Vertical scaling | Auto-scaling |
-| **Setup Complexity** | Database + SSL required | Zero configuration |
-| **Cost** | Hosting fees | Free tier generous |
-| **Compliance** | GDPR/HIPAA self-managed | DPA required |
-| **Availability** | Your SLA responsibility | 99.99% Cloudflare SLA |
-
-**Recommendation:**
-- Choose **Self-Hosted** for: Data sovereignty, compliance requirements, learning
-- Choose **Cloudflare Worker** for: Global reach, zero maintenance, speed
+- encrypted file attachments
+- QR code for secure links
+- separate key-sharing mode
+- OpenAPI / Swagger export
+- admin-only cleanup / moderation tools
+- theme switcher
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas to improve:
+Issues and pull requests are welcome.
 
-- [ ] File attachments (encrypted)
-- [ ] QR code generation for sharing
-- [ ] Custom themes
-- [ ] Browser extension
+If you open a PR, try to keep these guarantees intact:
 
----
-
-## 📜 License & Attribution
-
-**License:** MIT License - See [LICENSE](LICENSE)
-
-**Cryptographic Implementation:**
-- Web Crypto API W3C Specification
-- NIST SP 800-132 (PBKDF2)
-- FIPS 197 (AES)
-
-**Typography:**
-- Vazirmatn by Saber Rastikerdar (Persian/Arabic script support)
-
-**Inspiration:**
-- PrivateBin (PHP implementation)
-- ZeroBin (original concept)
-- CryptPad (collaborative editing)
+- client-side encryption only
+- zero-knowledge storage model
+- no accidental leakage of key material to the server
+- backward compatibility for existing shared links where possible
 
 ---
 
-**⚠️ Legal Disclaimer**
+## 📜 License
 
-> THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. The authors and contributors assume no liability for data loss, security breaches, or misuse. Users are solely responsible for:
-> - Key management and storage
-> - Operational security practices
-> - Compliance with local laws and regulations
-> - Secure transmission of URLs and passwords
-
----
-
-## 📊 Quick Stats
-
-| Metric | Value |
-|--------|-------|
-| Encryption strength | 256-bit |
-| Key derivation iterations | 100,000 |
-| IV length | 96-bit (12 bytes) |
-| Maximum message size | Limited by browser memory (~2GB) |
-| Supported languages | All Unicode (UTF-8) |
-| Database overhead | ~2x plaintext size (JSON + Base64) |
+MIT — see [`LICENSE`](LICENSE).
 
 ---
 
@@ -455,4 +555,11 @@ Contributions welcome! Areas to improve:
 **TheGreatAzizi**
 
 - GitHub: [@TheGreatAzizi](https://github.com/TheGreatAzizi)
-- X/Twitter: [@the_azzi](https://x.com/the_azzi)
+- X: [@the_azzi](https://x.com/the_azzi)
+- Telegram: [@luluch_code](https://t.me/luluch_code)
+
+---
+
+## ⚠️ Disclaimer
+
+This project is provided **as is** without warranty of any kind. You are responsible for your own deployment security, backups, SSL/TLS configuration, database hardening, and safe sharing of URLs and passwords.
