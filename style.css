@@ -860,6 +860,40 @@ footer {
     margin-top: 6px;
 }
 
+.footer-manifesto {
+    margin: 18px auto 0;
+    max-width: 760px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(245, 158, 11, 0.24);
+    background: linear-gradient(180deg, rgba(44, 28, 9, 0.65), rgba(28, 20, 10, 0.42));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.footer-manifesto-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    background: rgba(245, 158, 11, 0.12);
+    color: #facc15;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.footer-manifesto p {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.75;
+}
+
+.footer-manifesto p + p {
+    margin-top: 8px;
+}
+
 .footer-links {
     margin-top: 16px;
 }
@@ -1097,6 +1131,16 @@ footer {
     .step-number {
         width: 1.8rem;
         height: 1.8rem;
+    }
+
+    .footer-manifesto {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .footer-manifesto p {
+        font-size: 0.95rem;
+        line-height: 1.7;
     }
 
     .footer-links a {
