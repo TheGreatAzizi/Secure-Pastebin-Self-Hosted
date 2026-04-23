@@ -7,6 +7,15 @@ const FONT_STACK_MONO = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 
 const MAX_CUSTOM_EXPIRY_SECONDS = 31536000;
 const MIN_CUSTOM_EXPIRY_SECONDS = 300;
 
+function prefersInstantScroll() {
+    return window.matchMedia('(max-width: 640px)').matches;
+}
+
+function smartScrollIntoView(element) {
+    if (!element) return;
+    element.scrollIntoView({ behavior: prefersInstantScroll() ? 'auto' : 'smooth', block: 'start' });
+}
+
 function showError(msg) {
     document.getElementById('errorDisplay').style.display = 'flex';
     document.getElementById('errorMessage').textContent = msg;
@@ -616,7 +625,7 @@ async function createPaste() {
         document.getElementById('expiryTime').textContent = expiry.displayDate.toLocaleString();
         document.getElementById('passwordNotice').style.display = hasPassword ? 'flex' : 'none';
         document.getElementById('resultBox').classList.add('show');
-        document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        smartScrollIntoView(document.getElementById('resultBox'));
         resetCreateForm();
 
     } catch (err) {
@@ -669,7 +678,7 @@ async function decryptPaste() {
             pendingData = data;
             document.getElementById('createView').style.display = 'none';
             document.getElementById('passwordPrompt').classList.add('show');
-            document.getElementById('passwordPrompt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            smartScrollIntoView(document.getElementById('passwordPrompt'));
             return;
         }
 
